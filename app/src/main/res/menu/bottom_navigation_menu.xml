@@ -1,0 +1,32 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".ui.MainActivity">
+
+    <item
+        android:id="@+id/heart_fragment"
+        android:icon="@drawable/heart"
+        android:title="@string/heart"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/temperature_fragment"
+        android:icon="@drawable/thermometer"
+        android:visible="false"
+        android:title="@string/temperature"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/medicine_fragment"
+        android:icon="@drawable/pill"
+        android:title="@string/medicine"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/settings_fragment"
+        android:icon="@drawable/settings"
+        android:title="@string/settings"
+        app:showAsAction="ifRoom" />
+
+
+</menu>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/heart_fragment">
+
+    <fragment
+        android:id="@+id/heart_fragment"
+        android:name="com.kylecorry.healthsense.heart.ui.HeartFragment"
+        android:label="HeartFragment" />
+
+    <fragment
+        android:id="@+id/medicine_fragment"
+        android:name="com.kylecorry.healthsense.medicine.ui.MedicineFragment"
+        android:label="MedicineFragment" />
+
+    <fragment
+        android:id="@+id/temperature_fragment"
+        android:name="com.kylecorry.healthsense.temperature.ui.TemperatureFragment"
+        android:label="TemperatureFragment" />
+
+    <fragment
+        android:id="@+id/settings_fragment"
+        android:name="com.kylecorry.healthsense.settings.SettingsFragment"
+        android:label="SettingsFragment" />
+</navigation>

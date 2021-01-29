@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">Health Sense</string>
+    <string name="heart">Heart</string>
+    <string name="systolic">Systolic</string>
+    <string name="diastolic">Diastolic</string>
+    <string name="low_blood_pressure">Low</string>
+    <string name="normal">Normal</string>
+    <string name="elevated">Elevated</string>
+    <string name="high_blood_pressure_stage_1">High (stage 1)</string>
+    <string name="high_blood_pressure_stage_2">High (stage 2)</string>
+    <string name="extreme_high_blood_pressure">Extremely high</string>
+    <string name="medicine_reminder">Medicine Reminder</string>
+    <string name="medicine_reminder_description">Reminders to take medicine</string>
+    <string name="temperature">Temperature</string>
+    <string name="medicine">Medicine</string>
+    <string name="settings">Settings</string>
+    <string name="log_blood_pressure">Log</string>
+    <string name="delete_reading">Delete reading?</string>
+    <string name="dialog_ok">OK</string>
+    <string name="dialog_cancel">Cancel</string>
+    <string name="slash">/</string>
+    <string name="blood_pressure">Blood Pressure</string>
+    <string name="delete_medicine">Delete medicine?</string>
+</resources>

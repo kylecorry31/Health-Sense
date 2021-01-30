@@ -1,16 +1,10 @@
 package com.kylecorry.healthsense.heart.ui
 
 import android.Manifest
-import android.annotation.SuppressLint
-import android.graphics.*
-import android.media.Image
 import android.os.Bundle
-import android.util.Size
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageAnalysis
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
@@ -30,11 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.Instant
-import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.core.content.ContextCompat
-import com.kylecorry.healthsense.heart.domain.LowPassFilter
 import com.kylecorry.healthsense.heart.infrastructure.CameraHeartRateSensor
-import java.io.ByteArrayOutputStream
 
 class HeartFragment : Fragment() {
 
@@ -103,9 +93,13 @@ class HeartFragment : Fragment() {
             PermissionUtils.requestPermissions(requireActivity(), listOf(Manifest.permission.CAMERA), 123)
             if (PermissionUtils.hasPermission(requireContext(), Manifest.permission.CAMERA) && !monitoring){
                 monitoring = true
+                binding.bpm.text = getString(R.string.calculating)
+                heartChart.plot(listOf())
                 heartRateSensor.start(this::onHeartRateUpdate)
             } else {
                 monitoring = false
+                binding.bpm.text = ""
+                heartChart.plot(listOf())
                 heartRateSensor.stop(this::onHeartRateUpdate)
             }
         }
@@ -168,9 +162,9 @@ class HeartFragment : Fragment() {
     }
 
     private fun onHeartRateUpdate(): Boolean {
-        heartChart.plot(heartRateSensor.pulseWave.map { it.second }, heartRateSensor.peaks.map { peak -> heartRateSensor.pulseWave.indexOfFirst { it.first == peak } })
+        heartChart.plot(heartRateSensor.pulseWave.map { it.second }, heartRateSensor.heartBeats.map { peak -> heartRateSensor.pulseWave.indexOfFirst { it.first == peak } })
         if (heartRateSensor.bpm != 0){
-            binding.bpm.text = "${heartRateSensor.bpm} BPM"
+            binding.bpm.text = getString(R.string.bpm, heartRateSensor.bpm.toString())
         } else {
             binding.bpm.text = ""
         }

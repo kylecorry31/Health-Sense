@@ -1,11 +1,14 @@
 package com.kylecorry.healthsense.heart.domain
 
-class LowPassFilter(private val alpha: Float, initialValue: Float = 0f) {
+class MovingAverageFilter(var size: Int) {
 
-    private var estimate = initialValue
+    private val window = mutableListOf<Float>()
 
     fun filter(measurement: Float): Float {
-        estimate = (1 - alpha) * estimate + alpha * measurement
-        return estimate
+        window.add(measurement)
+        if (window.size > size){
+            window.removeAt(0)
+        }
+        return window.average().toFloat()
     }
 }

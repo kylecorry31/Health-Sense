@@ -7,14 +7,17 @@ import android.media.Image
 import android.util.Size
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.ImageProxy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
-import com.kylecorry.healthsense.heart.domain.LowPassFilter
+import com.kylecorry.healthsense.heart.domain.MovingAverageFilter
 import com.kylecorry.trailsensecore.infrastructure.sensors.AbstractSensor
 import java.io.ByteArrayOutputStream
 import java.time.Duration
 import java.time.Instant
+import kotlin.math.abs
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 class CameraHeartRateSensor(
@@ -23,17 +26,20 @@ class CameraHeartRateSensor(
 ) : AbstractSensor() {
 
     private val readings = mutableListOf<Pair<Instant, Float>>()
+    private val _heartBeats = mutableListOf<Instant>()
     private val maxReadingInterval = Duration.ofSeconds(10)
-    private val alpha = 0.5f
-    private var filter = LowPassFilter(alpha, 0f)
+    private var filter = MovingAverageFilter(4)
     private var _bpm = 0
+
+    private var startUpTime = Instant.MIN
 
     private var cameraProvider: ProcessCameraProvider? = null
 
     val pulseWave: List<Pair<Instant, Float>>
         get() = readings.toList()
 
-    var peaks = mutableListOf<Instant>()
+    val heartBeats: List<Instant>
+        get() = _heartBeats.toList()
 
     val bpm: Int
         get() = _bpm
@@ -52,42 +58,13 @@ class CameraHeartRateSensor(
                 .build()
 
             imageAnalysis.setAnalyzer(ContextCompat.getMainExecutor(context), { image ->
-                val bitmap = image.image?.toBitmap()
-                if (bitmap != null) {
-                    var averageR = 0f
-                    val total = bitmap.width * bitmap.height.toFloat()
-                    for (w in 0 until bitmap.width) {
-                        for (h in 0 until bitmap.height) {
-                            averageR += Color.red(bitmap.getPixel(w, h)) / total
-                        }
-                    }
-
-                    if (averageR > 100) {
-                        if (readings.isEmpty()) {
-                            filter = LowPassFilter(alpha, averageR)
-                            readings.add(Pair(Instant.now(), averageR))
-                        } else {
-                            readings.add(Pair(Instant.now(), filter.filter(averageR)))
-                        }
-
-                        while (Duration.between(
-                                readings.first().first,
-                                readings.last().first
-                            ) > maxReadingInterval
-                        ) {
-                            readings.removeAt(0)
-                        }
-
-                        calculateHeartRate()
-                        notifyListeners()
-                    }
-
-                }
+                analyzeImage(image)
                 image.close()
             })
 
             val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
+            startUpTime = Instant.now()
             val camera =
                 cameraProvider?.bindToLifecycle(lifecycleOwner, cameraSelector, imageAnalysis)
             val controls = camera?.cameraControl
@@ -98,40 +75,67 @@ class CameraHeartRateSensor(
         }, ContextCompat.getMainExecutor(context))
     }
 
-    private fun calculateHeartRate() {
-        val dt = Duration.between(readings.first().first, readings.last().first)
-
-        if (dt < Duration.ofSeconds(5)) {
-            _bpm = 0
+    @SuppressLint("UnsafeExperimentalUsageError")
+    private fun analyzeImage(image: ImageProxy) {
+        if (Duration.between(startUpTime, Instant.now()) < WARMUP_TIME) {
             return
         }
 
-        val beats = countPeaks(readings, Duration.ofMillis(400))
-        _bpm = (beats / (dt.toMillis() / 1000f / 60f)).roundToInt()
-    }
-
-    private fun countPeaks(
-        readings: List<Pair<Instant, Float>>,
-        minDuration: Duration = Duration.ofMillis(300)
-    ): Int {
-        var lastTime = Instant.MIN
-        peaks.clear()
-        for (i in 1 until readings.size - 1) {
-            val r1 = readings[i - 1].second
-            val r2 = readings[i].second
-            val r3 = readings[i + 1].second
-
-            if (maxOf(r1, r2, r3) == r2 && Duration.between(
-                    lastTime,
-                    readings[i].first
-                ) > minDuration
-            ) {
-                lastTime = readings[i].first
-                peaks.add(lastTime)
+        val bitmap = image.image?.toBitmap() ?: return
+        var averageR = 0f
+        val total = bitmap.width * bitmap.height.toFloat()
+        for (w in 0 until bitmap.width) {
+            for (h in 0 until bitmap.height) {
+                averageR += Color.red(bitmap.getPixel(w, h)) / total
             }
         }
+        bitmap.recycle()
 
-        return peaks.size
+        if (averageR < 100) {
+            return
+        }
+
+        if (readings.isEmpty()) {
+            filter = MovingAverageFilter(4)
+            readings.add(Pair(Instant.now(), averageR))
+        } else {
+            readings.add(Pair(Instant.now(), filter.filter(averageR)))
+        }
+
+        while (Duration.between(
+                readings.first().first,
+                readings.last().first
+            ) > maxReadingInterval
+        ) {
+            readings.removeAt(0)
+        }
+
+        calculateHeartRate()
+        notifyListeners()
+    }
+
+    private fun calculateHeartRate() {
+        val dt = Duration.between(readings.first().first, readings.last().first)
+
+        if (dt < Duration.ofSeconds(1) && readings.size > 3) {
+            _bpm = 0
+            return
+        }
+        _heartBeats.clear()
+        val beats =
+            findPeaks(readings, Duration.ofMillis(400)).map { readings[it].first }.toMutableList()
+        _heartBeats.addAll(beats)
+
+        val durations = mutableListOf<Duration>()
+        for (i in 1 until heartBeats.size) {
+            durations.add(Duration.between(heartBeats[i - 1], heartBeats[i]))
+        }
+
+        val averageDuration = 1 / (durations.map { it.toMillis() }.average() / 1000 / 60)
+
+        if (!averageDuration.isNaN()) {
+            _bpm = averageDuration.roundToInt()
+        }
     }
 
     private fun Image.toBitmap(): Bitmap {
@@ -156,9 +160,62 @@ class CameraHeartRateSensor(
         return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
     }
 
+
+    private fun findPeaks(readings: List<Pair<Instant, Float>>, minDuration: Duration): List<Int> {
+        val minHeight = 100
+        val maxNum = 30
+        val peaks = mutableListOf<Int>()
+        // Find peaks above min height
+        var i = 1
+        var width: Int
+        while (i < readings.size - 1) {
+            val prev = readings[i - 1]
+            val curr = readings[i]
+            if (curr.second > minHeight && curr.second > prev.second) {
+                width = 1
+                while (i + width < readings.size && abs(curr.second - readings[i + width].second) < 0.2) {
+                    width++
+                }
+                i += if (curr.second > readings[min(
+                        i + width,
+                        readings.size - 1
+                    )].second && peaks.size < maxNum
+                ) {
+                    peaks.add(i)
+                    width + 1
+                } else {
+                    width
+                }
+            } else {
+                i++
+            }
+        }
+
+        peaks.sortByDescending { readings[it].second }
+
+        val filteredPeaks = mutableListOf<Int>()
+        filteredPeaks.addAll(peaks)
+
+        for (k in 0 until peaks.size) {
+            for (j in (k + 1) until peaks.size) {
+                val dist = Duration.between(readings[peaks[j]].first, readings[peaks[k]].first)
+                if (dist.abs() < minDuration) {
+                    filteredPeaks.remove(j)
+                }
+            }
+        }
+
+        return filteredPeaks.sortedBy { it }
+    }
+
     override fun stopImpl() {
         cameraProvider?.unbindAll()
         cameraProvider = null
         readings.clear()
+        _heartBeats.clear()
+    }
+
+    companion object {
+        private val WARMUP_TIME = Duration.ofSeconds(3)
     }
 }

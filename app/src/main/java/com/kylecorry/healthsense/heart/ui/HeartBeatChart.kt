@@ -34,7 +34,8 @@ class HeartBeatChart(private val chart: LineChart, private val color: Int) {
         val b = primaryColor.blue
 
         chart.xAxis.setDrawGridLines(false)
-        chart.axisLeft.setDrawGridLines(true)
+        chart.axisLeft.setDrawGridLines(false)
+        chart.axisLeft.setDrawLabels(false)
         chart.axisLeft.gridColor = Color.argb(50, r, g, b)
         chart.axisLeft.textColor = Color.argb(150, r, g, b)
         chart.axisRight.setDrawGridLines(false)
@@ -44,13 +45,8 @@ class HeartBeatChart(private val chart: LineChart, private val color: Int) {
         chart.setNoDataText("")
     }
 
-    fun plot(data: List<Float>) {
+    fun plot(data: List<Float>, peaks: List<Int> = listOf()) {
         val values = data.mapIndexed { index, value -> Entry(index.toFloat(), value) }
-
-//        chart.axisLeft.axisMinimum = min(30f, data.minOrNull() ?: 30f)
-//        chart.axisLeft.axisMaximum = max(100f, data.maxOrNull() ?: 100f)
-        chart.axisLeft.granularity = granularity
-
         val set1 = LineDataSet(values, "Heart Beat")
         set1.color = color
         set1.fillAlpha = 180
@@ -63,8 +59,21 @@ class HeartBeatChart(private val chart: LineChart, private val color: Int) {
         set1.circleRadius = 1.5f
         set1.setDrawFilled(false)
 
+        val peakValues = peaks.map { value -> Entry(value.toFloat(), data[value]) }
+        val set2 = LineDataSet(peakValues, "Peaks")
+        set2.color = Color.TRANSPARENT
+        set2.fillAlpha = 0
+        set2.lineWidth = 0f
+        set2.setDrawValues(false)
+        set2.fillColor = Color.TRANSPARENT
+        set2.setCircleColor(Color.WHITE)
+        set2.setDrawCircleHole(false)
+        set2.setDrawCircles(true)
+        set2.circleRadius = 2f
+        set2.setDrawFilled(false)
 
-        val lineData = LineData(set1)
+
+        val lineData = LineData(set1, set2)
         chart.data = lineData
         chart.legend.isEnabled = false
         chart.notifyDataSetChanged()

@@ -33,6 +33,7 @@ import java.time.Instant
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import com.kylecorry.healthsense.heart.domain.LowPassFilter
+import com.kylecorry.healthsense.heart.infrastructure.CameraHeartRateSensor
 import java.io.ByteArrayOutputStream
 
 class HeartFragment : Fragment() {
@@ -47,9 +48,8 @@ class HeartFragment : Fragment() {
 
     private lateinit var heartChart: HeartBeatChart
 
-    private val maxHeartValues = 100
-    private var filter = LowPassFilter(0.5f, 0f)
-    private val heartValues = mutableListOf<Float>()
+    private val heartRateSensor by lazy { CameraHeartRateSensor(requireContext(), viewLifecycleOwner) }
+    private var monitoring = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -101,8 +101,12 @@ class HeartFragment : Fragment() {
 
         binding.heartRateBtn.setOnClickListener {
             PermissionUtils.requestPermissions(requireActivity(), listOf(Manifest.permission.CAMERA), 123)
-            if (PermissionUtils.hasPermission(requireContext(), Manifest.permission.CAMERA)){
-                monitorHeartRate()
+            if (PermissionUtils.hasPermission(requireContext(), Manifest.permission.CAMERA) && !monitoring){
+                monitoring = true
+                heartRateSensor.start(this::onHeartRateUpdate)
+            } else {
+                monitoring = false
+                heartRateSensor.stop(this::onHeartRateUpdate)
             }
         }
 
@@ -141,6 +145,12 @@ class HeartFragment : Fragment() {
         update()
     }
 
+    override fun onPause() {
+        super.onPause()
+        monitoring = false
+        heartRateSensor.stop(this::onHeartRateUpdate)
+    }
+
     private fun update() {
         val systolic = binding.systolicEdit.text.toString().toIntOrNull()
         val diastolic = binding.diastolicEdit.text.toString().toIntOrNull()
@@ -157,73 +167,16 @@ class HeartFragment : Fragment() {
 
     }
 
-    @SuppressLint("UnsafeExperimentalUsageError")
-    private fun monitorHeartRate(){
-        val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
-        cameraProviderFuture.addListener({
-            val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
-            val imageAnalysis = ImageAnalysis.Builder()
-                .setTargetResolution(Size(200, 200))
-                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .build()
-
-            imageAnalysis.setAnalyzer(ContextCompat.getMainExecutor(requireContext()), { image ->
-                val bitmap = image.image?.toBitmap()
-                if (bitmap != null) {
-                    var averageR = 0f
-                    val total = bitmap.width * bitmap.height.toFloat()
-                    for (w in 0 until bitmap.width){
-                        for (h in 0 until bitmap.height){
-                            averageR += Color.red(bitmap.getPixel(w, h)) / total
-                        }
-                    }
-
-                    if (heartValues.isEmpty()){
-                        filter = LowPassFilter(0.5f, averageR)
-                        heartValues.add(averageR)
-                    } else {
-                        heartValues.add(filter.filter(averageR))
-                    }
-
-                    if (heartValues.size > maxHeartValues){
-                        heartValues.removeAt(0)
-                    }
-                    heartChart.plot(heartValues)
-                }
-                image.close()
-            })
-
-            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-
-            val camera = cameraProvider.bindToLifecycle(viewLifecycleOwner, cameraSelector, imageAnalysis)
-            val controls = camera.cameraControl
-            controls.enableTorch(true)
-            controls.setExposureCompensationIndex(0)
-            controls.cancelFocusAndMetering()
-
-        }, ContextCompat.getMainExecutor(requireContext()))
+    private fun onHeartRateUpdate(): Boolean {
+        heartChart.plot(heartRateSensor.pulseWave.map { it.second }, heartRateSensor.peaks.map { peak -> heartRateSensor.pulseWave.indexOfFirst { it.first == peak } })
+        if (heartRateSensor.bpm != 0){
+            binding.bpm.text = "${heartRateSensor.bpm} BPM"
+        } else {
+            binding.bpm.text = ""
+        }
+        return true
     }
 
-    private fun Image.toBitmap(): Bitmap {
-        val yBuffer = planes[0].buffer // Y
-        val uBuffer = planes[1].buffer // U
-        val vBuffer = planes[2].buffer // V
 
-        val ySize = yBuffer.remaining()
-        val uSize = uBuffer.remaining()
-        val vSize = vBuffer.remaining()
-
-        val nv21 = ByteArray(ySize + uSize + vSize)
-
-        yBuffer.get(nv21, 0, ySize)
-        vBuffer.get(nv21, ySize, vSize)
-        uBuffer.get(nv21, ySize + vSize, uSize)
-
-        val yuvImage = YuvImage(nv21, ImageFormat.NV21, this.width, this.height, null)
-        val out = ByteArrayOutputStream()
-        yuvImage.compressToJpeg(Rect(0, 0, yuvImage.width, yuvImage.height), 50, out)
-        val imageBytes = out.toByteArray()
-        return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-    }
 
 }

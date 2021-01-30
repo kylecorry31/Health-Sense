@@ -10,16 +10,21 @@
         app:showAsAction="ifRoom" />
 
     <item
-        android:id="@+id/temperature_fragment"
-        android:icon="@drawable/thermometer"
-        android:visible="false"
-        android:title="@string/temperature"
+        android:id="@+id/weight_fragment"
+        android:icon="@drawable/weight"
+        android:title="@string/weight"
         app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/medicine_fragment"
         android:icon="@drawable/pill"
         android:title="@string/medicine"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/virus_fragment"
+        android:icon="@drawable/virus"
+        android:title="@string/virus"
         app:showAsAction="ifRoom" />
 
     <item

@@ -1,4 +1,4 @@
-package com.kylecorry.healthsense.temperature.domain
+package com.kylecorry.healthsense.virus.domain
 
 import com.kylecorry.trailsensecore.domain.units.Temperature
 import com.kylecorry.trailsensecore.domain.units.TemperatureUnits

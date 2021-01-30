@@ -1,4 +1,4 @@
-package com.kylecorry.healthsense.temperature.domain
+package com.kylecorry.healthsense.virus.domain
 
 enum class BodyTemperature {
     Hypothermia,

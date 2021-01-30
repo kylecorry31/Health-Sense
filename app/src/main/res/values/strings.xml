@@ -11,7 +11,7 @@
     <string name="extreme_high_blood_pressure">Extremely high</string>
     <string name="medicine_reminder">Medicine Reminder</string>
     <string name="medicine_reminder_description">Reminders to take medicine</string>
-    <string name="temperature">Temperature</string>
+    <string name="virus">Virus</string>
     <string name="medicine">Medicine</string>
     <string name="settings">Settings</string>
     <string name="log_blood_pressure">Log</string>
@@ -23,4 +23,5 @@
     <string name="delete_medicine">Delete medicine?</string>
     <string name="bpm">%s BPM</string>
     <string name="calculating">Calculating…</string>
+    <string name="weight">Weight</string>
 </resources>

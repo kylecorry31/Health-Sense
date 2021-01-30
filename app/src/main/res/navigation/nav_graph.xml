@@ -15,9 +15,14 @@
         android:label="MedicineFragment" />
 
     <fragment
-        android:id="@+id/temperature_fragment"
-        android:name="com.kylecorry.healthsense.temperature.ui.TemperatureFragment"
-        android:label="TemperatureFragment" />
+        android:id="@+id/virus_fragment"
+        android:name="com.kylecorry.healthsense.virus.ui.VirusFragment"
+        android:label="VirusFragment" />
+
+    <fragment
+        android:id="@+id/weight_fragment"
+        android:name="com.kylecorry.healthsense.weight.ui.WeightFragment"
+        android:label="WeightFragment" />
 
     <fragment
         android:id="@+id/settings_fragment"

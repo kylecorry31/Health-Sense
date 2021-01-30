@@ -1,5 +1,6 @@
 package com.kylecorry.healthsense.ui
 
+import android.Manifest
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatDelegate
@@ -10,6 +11,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.kylecorry.healthsense.R
 import com.kylecorry.healthsense.medicine.infrastructure.MedicineReminderReceiver
 import com.kylecorry.trailsensecore.infrastructure.system.NotificationUtils
+import com.kylecorry.trailsensecore.infrastructure.system.PermissionUtils
 
 class MainActivity : AppCompatActivity() {
 
@@ -36,6 +38,5 @@ class MainActivity : AppCompatActivity() {
         )
 
         MedicineReminderReceiver.start(this)
-
     }
 }

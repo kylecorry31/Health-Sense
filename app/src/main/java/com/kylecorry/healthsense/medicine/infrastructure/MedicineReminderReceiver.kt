@@ -1,5 +1,6 @@
 package com.kylecorry.healthsense.medicine.infrastructure
 
+import android.app.Notification
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -50,6 +51,9 @@ class MedicineReminderReceiver : BroadcastReceiver() {
                 .setContentTitle(context.getString(R.string.medicine_reminder))
                 .setContentText(medicinesToTake)
                 .setSmallIcon(R.drawable.pill)
+                .setStyle(
+                    Notification.BigTextStyle()
+                    .bigText(medicinesToTake))
                 .setAutoCancel(false)
                 .build()
             NotificationUtils.send(context, NOTIFICATION_ID, notification)

@@ -10,9 +10,9 @@
         app:showAsAction="ifRoom" />
 
     <item
-        android:id="@+id/weight_fragment"
-        android:icon="@drawable/weight"
-        android:title="@string/weight"
+        android:id="@+id/steps_fragment"
+        android:icon="@drawable/steps"
+        android:title="@string/steps"
         app:showAsAction="ifRoom" />
 
     <item

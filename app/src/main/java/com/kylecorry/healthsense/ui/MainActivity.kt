@@ -10,6 +10,7 @@ import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.kylecorry.healthsense.R
 import com.kylecorry.healthsense.medicine.infrastructure.MedicineReminderReceiver
+import com.kylecorry.healthsense.steps.infrastructure.PedometerService
 import com.kylecorry.trailsensecore.infrastructure.system.NotificationUtils
 import com.kylecorry.trailsensecore.infrastructure.system.PermissionUtils
 
@@ -37,6 +38,16 @@ class MainActivity : AppCompatActivity() {
             false
         )
 
+        NotificationUtils.createChannel(
+            this,
+            PedometerService.CHANNEL_ID,
+            getString(R.string.steps),
+            getString(R.string.steps),
+            NotificationUtils.CHANNEL_IMPORTANCE_LOW,
+            true
+        )
+
+        PedometerService.start(this)
         MedicineReminderReceiver.start(this)
     }
 }

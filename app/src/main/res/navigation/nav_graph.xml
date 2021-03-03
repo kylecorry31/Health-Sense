@@ -20,9 +20,9 @@
         android:label="VirusFragment" />
 
     <fragment
-        android:id="@+id/weight_fragment"
-        android:name="com.kylecorry.healthsense.weight.ui.WeightFragment"
-        android:label="WeightFragment" />
+        android:id="@+id/steps_fragment"
+        android:name="com.kylecorry.healthsense.steps.ui.StepsFragment"
+        android:label="StepsFragment" />
 
     <fragment
         android:id="@+id/settings_fragment"
